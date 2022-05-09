@@ -1,4 +1,5 @@
 use crossterm::{
+	cursor::MoveTo,
 	event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
 	execute,
 	terminal::{enable_raw_mode, Clear, ClearType},
@@ -11,25 +12,33 @@ pub struct Editor {
 }
 
 impl Editor {
-	pub fn run(&mut self) -> Result<()> {
-		enable_raw_mode()?;
+	pub fn run(&mut self) {
+		if let Err(e) = enable_raw_mode() {
+			die(&e);
+		}
 
 		loop {
-			self.refresh_screen()?;
-
-			if self.should_quit {
-				return Ok(());
+			if let Err(e) = self.refresh_screen() {
+				die(&e);
 			}
 
-			self.process_keypress()?;
+			if self.should_quit {
+				return;
+			}
+
+			if let Err(e) = self.process_keypress() {
+				die(&e);
+			}
 		}
 	}
 	pub fn default() -> Self {
 		Self { should_quit: false }
 	}
 	fn refresh_screen(&self) -> Result<()> {
-		execute!(stdout(), Clear(ClearType::All))?;
-
+		execute!(stdout(), Clear(ClearType::All), MoveTo(0, 0))?;
+		if self.should_quit {
+			println!("Goodbye.\r");
+		}
 		stdout().flush()
 	}
 	fn process_keypress(&mut self) -> Result<()> {
@@ -53,6 +62,7 @@ fn read_key() -> Result<KeyEvent> {
 	}
 }
 
-fn _die(e: &crossterm::ErrorKind) {
+fn die(e: &std::io::Error) {
+	execute!(stdout(), Clear(ClearType::All)).ok();
 	panic!("{}", e);
 }
