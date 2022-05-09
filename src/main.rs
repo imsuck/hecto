@@ -1,9 +1,9 @@
+#![warn(clippy::all, clippy::pedantic)]
 mod editor;
 use editor::Editor;
 
 fn main() -> crossterm::Result<()> {
-    let editor = Editor::default();
-    editor.run()?;
+	Editor::default().run()?;
 
-    Ok(())
+	Ok(())
 }

@@ -1,0 +1,6 @@
+edition = "2021"
+hard_tabs = true
+hex_literal_case = "Lower"
+imports_layout = "HorizontalVertical"
+match_block_trailing_comma = true
+imports_granularity = "Crate"
