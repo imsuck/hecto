@@ -1,22 +1,16 @@
+use crate::Terminal;
 use crossterm::{
-	cursor::MoveTo,
-	event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
-	execute,
-	terminal::{enable_raw_mode, Clear, ClearType},
+	event::{KeyCode, KeyModifiers},
 	Result,
 };
-use std::io::{stdout, Write};
 
 pub struct Editor {
 	should_quit: bool,
+	terminal: Terminal,
 }
 
 impl Editor {
 	pub fn run(&mut self) {
-		if let Err(e) = enable_raw_mode() {
-			die(&e);
-		}
-
 		loop {
 			if let Err(e) = self.refresh_screen() {
 				die(&e);
@@ -32,19 +26,29 @@ impl Editor {
 		}
 	}
 	pub fn default() -> Self {
-		Self { should_quit: false }
+		Self {
+			should_quit: false,
+			terminal: Terminal::default().expect("Failed to initialize terminal"),
+		}
 	}
 	fn refresh_screen(&self) -> Result<()> {
-		execute!(stdout(), Clear(ClearType::All), MoveTo(0, 0))?;
+		// execute!(stdout(), Clear(ClearType::All), MoveTo(0, 0))?;
+		Terminal::clear_screen()?;
+		Terminal::cursor_position(0, 0)?;
+
 		if self.should_quit {
 			println!("Goodbye.\r");
+		} else {
+			self.draw_rows();
+			Terminal::cursor_position(0, 0)?;
 		}
-		stdout().flush()
+
+		Terminal::flush()
 	}
 	fn process_keypress(&mut self) -> Result<()> {
 		use KeyCode::{Char, Esc};
 
-		let pressed_key = read_key()?;
+		let pressed_key = Terminal::read_key()?;
 		match (pressed_key.modifiers, pressed_key.code) {
 			(KeyModifiers::CONTROL, Char('q')) | (_, Esc) => self.should_quit = true,
 			_ => (),
@@ -52,17 +56,14 @@ impl Editor {
 
 		Ok(())
 	}
-}
-
-fn read_key() -> Result<KeyEvent> {
-	loop {
-		if let Event::Key(event) = event::read()? {
-			return Ok(event);
+	fn draw_rows(&self) {
+		for _ in 0..self.terminal.size().height - 1 {
+			println!("~\r");
 		}
 	}
 }
 
 fn die(e: &std::io::Error) {
-	execute!(stdout(), Clear(ClearType::All)).ok();
+	Terminal::clear_screen().ok();
 	panic!("{}", e);
 }
