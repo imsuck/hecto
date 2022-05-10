@@ -51,4 +51,7 @@ impl Terminal {
 	pub fn cursor_show() {
 		execute!(stdout(), Show).ok();
 	}
+    pub fn clear_current_line() {
+        execute!(stdout(), Clear(ClearType::CurrentLine)).ok();
+    }
 }
