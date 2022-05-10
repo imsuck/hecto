@@ -1,5 +1,5 @@
 use crossterm::{
-	cursor::MoveTo,
+	cursor::{Hide, MoveTo, Show},
 	event::{self, Event, KeyEvent},
 	execute,
 	terminal::{enable_raw_mode, Clear, ClearType},
@@ -29,11 +29,11 @@ impl Terminal {
 	pub fn size(&self) -> &Size {
 		&self.size
 	}
-	pub fn clear_screen() -> Result<()> {
-		execute!(stdout(), Clear(ClearType::All))
+	pub fn clear_screen() {
+		execute!(stdout(), Clear(ClearType::All)).ok();
 	}
-	pub fn cursor_position(x: u16, y: u16) -> Result<()> {
-		execute!(stdout(), MoveTo(x, y))
+	pub fn cursor_position(x: u16, y: u16) {
+		execute!(stdout(), MoveTo(x, y)).ok();
 	}
 	pub fn flush() -> Result<()> {
 		stdout().flush()
@@ -44,5 +44,11 @@ impl Terminal {
 				return Ok(event);
 			}
 		}
+	}
+	pub fn cursor_hide() {
+		execute!(stdout(), Hide).ok();
+	}
+	pub fn cursor_show() {
+		execute!(stdout(), Show).ok();
 	}
 }

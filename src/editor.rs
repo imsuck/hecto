@@ -32,17 +32,17 @@ impl Editor {
 		}
 	}
 	fn refresh_screen(&self) -> Result<()> {
-		// execute!(stdout(), Clear(ClearType::All), MoveTo(0, 0))?;
-		Terminal::clear_screen()?;
-		Terminal::cursor_position(0, 0)?;
+		Terminal::cursor_hide();
+		Terminal::clear_screen();
+		Terminal::cursor_position(0, 0);
 
 		if self.should_quit {
 			println!("Goodbye.\r");
 		} else {
 			self.draw_rows();
-			Terminal::cursor_position(0, 0)?;
+			Terminal::cursor_position(0, 0);
 		}
-
+		Terminal::cursor_show();
 		Terminal::flush()
 	}
 	fn process_keypress(&mut self) -> Result<()> {
@@ -64,6 +64,6 @@ impl Editor {
 }
 
 fn die(e: &std::io::Error) {
-	Terminal::clear_screen().ok();
+	Terminal::clear_screen();
 	panic!("{}", e);
 }
