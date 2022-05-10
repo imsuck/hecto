@@ -1,3 +1,4 @@
+use crate::Position;
 use crossterm::{
 	cursor::{Hide, MoveTo, Show},
 	event::{self, Event, KeyEvent},
@@ -26,13 +27,18 @@ impl Terminal {
 			},
 		})
 	}
+	#[must_use]
 	pub fn size(&self) -> &Size {
 		&self.size
 	}
 	pub fn clear_screen() {
 		execute!(stdout(), Clear(ClearType::All)).ok();
 	}
-	pub fn cursor_position(x: u16, y: u16) {
+    #[allow(clippy::cast_possible_truncation)]
+	pub fn cursor_position(position: &Position) {
+		let Position { x, y } = position;
+		let x = *x as u16;
+		let y = *y as u16;
 		execute!(stdout(), MoveTo(x, y)).ok();
 	}
 	pub fn flush() -> Result<()> {
@@ -51,7 +57,7 @@ impl Terminal {
 	pub fn cursor_show() {
 		execute!(stdout(), Show).ok();
 	}
-    pub fn clear_current_line() {
-        execute!(stdout(), Clear(ClearType::CurrentLine)).ok();
-    }
+	pub fn clear_current_line() {
+		execute!(stdout(), Clear(ClearType::CurrentLine)).ok();
+	}
 }
