@@ -1,5 +1,5 @@
 #![warn(clippy::all, clippy::pedantic)]
-#![allow(clippy::unused_self, clippy::missing_errors_doc)]
+#![allow(clippy::missing_errors_doc)]
 mod editor;
 mod terminal;
 use editor::Editor;

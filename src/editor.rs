@@ -61,7 +61,7 @@ impl Editor {
 		let pressed_key = Terminal::read_key()?;
 		match (pressed_key.modifiers, pressed_key.code) {
 			(KeyModifiers::CONTROL, Char('q')) | (_, Esc) => self.should_quit = true,
-			(_, Up) | (_, Down) | (_, Left) | (_, Right) => self.move_cursor(pressed_key.code),
+			(_, Up | Down | Left | Right) => self.move_cursor(pressed_key.code),
 			_ => (),
 		}
 
