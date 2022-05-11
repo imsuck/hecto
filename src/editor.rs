@@ -33,6 +33,7 @@ impl Editor {
 			}
 		}
 	}
+
 	pub fn default() -> Self {
 		Self {
 			should_quit: false,
@@ -55,6 +56,7 @@ impl Editor {
 		Terminal::cursor_show();
 		Terminal::flush()
 	}
+
 	fn process_keypress(&mut self) -> Result<()> {
 		use KeyCode::{Char, Down, Esc, Left, Right, Up};
 
@@ -67,6 +69,7 @@ impl Editor {
 
 		Ok(())
 	}
+
 	fn move_cursor(&mut self, key: KeyCode) {
 		use KeyCode::{Down, Left, Right, Up};
 
@@ -80,6 +83,7 @@ impl Editor {
 		}
 		self.cursor_position = Position { x, y };
 	}
+
 	fn draw_welcome_message(&self) {
 		let mut welcome_message = format!("Hecto editor -- version {}\r", VERSION);
 		let width = self.terminal.size().width as usize;
@@ -90,6 +94,7 @@ impl Editor {
 		welcome_message.truncate(width);
 		println!("{}\r", welcome_message);
 	}
+
 	fn draw_rows(&self) {
 		let height = self.terminal.size().height;
 		for row in 0..height - 1 {

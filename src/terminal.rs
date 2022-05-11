@@ -27,23 +27,28 @@ impl Terminal {
 			},
 		})
 	}
+
 	#[must_use]
 	pub fn size(&self) -> &Size {
 		&self.size
 	}
+
 	pub fn clear_screen() {
 		execute!(stdout(), Clear(ClearType::All)).ok();
 	}
-    #[allow(clippy::cast_possible_truncation)]
+
+	#[allow(clippy::cast_possible_truncation)]
 	pub fn cursor_position(position: &Position) {
 		let Position { x, y } = position;
 		let x = *x as u16;
 		let y = *y as u16;
 		execute!(stdout(), MoveTo(x, y)).ok();
 	}
+
 	pub fn flush() -> Result<()> {
 		stdout().flush()
 	}
+
 	pub fn read_key() -> Result<KeyEvent> {
 		loop {
 			if let Event::Key(event) = event::read()? {
@@ -51,12 +56,15 @@ impl Terminal {
 			}
 		}
 	}
+
 	pub fn cursor_hide() {
 		execute!(stdout(), Hide).ok();
 	}
+
 	pub fn cursor_show() {
 		execute!(stdout(), Show).ok();
 	}
+
 	pub fn clear_current_line() {
 		execute!(stdout(), Clear(ClearType::CurrentLine)).ok();
 	}
