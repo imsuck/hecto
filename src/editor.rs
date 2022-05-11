@@ -58,12 +58,14 @@ impl Editor {
 	}
 
 	fn process_keypress(&mut self) -> Result<()> {
-		use KeyCode::{Char, Down, Esc, Left, Right, Up};
+		use KeyCode::{Char, Down, End, Esc, Home, Left, PageDown, PageUp, Right, Up};
 
 		let pressed_key = Terminal::read_key()?;
 		match (pressed_key.modifiers, pressed_key.code) {
 			(KeyModifiers::CONTROL, Char('q')) | (_, Esc) => self.should_quit = true,
-			(_, Up | Down | Left | Right) => self.move_cursor(pressed_key.code),
+			(_, Up | Down | Left | Right | PageUp | PageDown | End | Home) => {
+				self.move_cursor(pressed_key.code)
+			},
 			_ => (),
 		}
 
@@ -71,7 +73,7 @@ impl Editor {
 	}
 
 	fn move_cursor(&mut self, key: KeyCode) {
-		use KeyCode::{Down, Left, Right, Up};
+		use KeyCode::{Down, End, Home, Left, PageDown, PageUp, Right, Up};
 
 		let size = self.terminal.size();
 		let height = size.height as usize;
@@ -91,6 +93,10 @@ impl Editor {
 					x = x.saturating_add(1);
 				}
 			},
+			PageUp => y = 0,
+			PageDown => y = height,
+			Home => x = 0,
+			End => x = width,
 			_ => (),
 		}
 		self.cursor_position = Position { x, y };
