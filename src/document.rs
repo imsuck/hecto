@@ -1,6 +1,8 @@
-use crate::Row;
-use crossterm::Result;
 use std::fs;
+
+use crossterm::Result;
+
+use crate::Row;
 
 #[derive(Default)]
 pub struct Document {

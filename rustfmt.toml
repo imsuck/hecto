@@ -1,6 +1,21 @@
 edition = "2021"
+
+max_width = 100
 hard_tabs = false
-hex_literal_case = "Lower"
-imports_layout = "HorizontalVertical"
-match_block_trailing_comma = true
-imports_granularity = "Crate"
+tab_spaces = 4
+newline_style = "Unix"
+
+use_small_heuristics = "Default"
+
+group_imports = "StdExternalCrate"
+imports_granularity = "Module"
+reorder_imports = true
+reorder_modules = true
+
+remove_nested_parens = true
+merge_derives = true
+use_try_shorthand = true
+use_field_init_shorthand = true
+# normalize_comments = true
+normalize_doc_attributes = true
+# wrap_comments = true

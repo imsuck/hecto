@@ -1,15 +1,11 @@
-use crate::Document;
-use crate::Row;
-use crate::Terminal;
-use crossterm::{
-    event::{KeyCode, KeyModifiers},
-    style::Color,
-    Result,
-};
-use std::{
-    env,
-    time::{Duration, Instant},
-};
+use std::env;
+use std::time::{Duration, Instant};
+
+use crossterm::event::{KeyCode, KeyModifiers};
+use crossterm::style::Color;
+use crossterm::Result;
+
+use crate::{Document, Row, Terminal};
 
 const STATUS_FG_COLOR: Color = Color::Rgb {
     r: 63,
@@ -30,17 +26,17 @@ pub struct Position {
 }
 
 struct StatusMessage {
-	text: String,
-	time: Instant,
+    text: String,
+    time: Instant,
 }
 
 impl StatusMessage {
-	fn from(message: String) -> Self {
-		Self {
-			text: message,
-			time: Instant::now(),
-		}
-	}
+    fn from(message: String) -> Self {
+        Self {
+            text: message,
+            time: Instant::now(),
+        }
+    }
 }
 
 pub struct Editor {
@@ -49,7 +45,7 @@ pub struct Editor {
     cursor_position: Position,
     offset: Position,
     document: Document,
-	status_message: StatusMessage,
+    status_message: StatusMessage,
 }
 
 impl Editor {
@@ -71,17 +67,17 @@ impl Editor {
 
     pub fn default() -> Self {
         let args: Vec<String> = env::args().collect();
-		let mut initial_status = String::from("HELP: Ctrl-Q = Quit");
+        let mut initial_status = String::from("HELP: Ctrl-Q = Quit");
 
         let document = if args.len() > 1 {
             let file_name = &args[1];
             let doc = Document::open(file_name);
-			if let Ok(doc) = doc {
-				doc
-			} else {
-				initial_status = format!("ERR: Could not open file: {}", file_name);
-				Document::default()
-			}
+            if let Ok(doc) = doc {
+                doc
+            } else {
+                initial_status = format!("ERR: Could not open file: {}", file_name);
+                Document::default()
+            }
         } else {
             Document::default()
         };
@@ -92,7 +88,7 @@ impl Editor {
             cursor_position: Position::default(),
             offset: Position::default(),
             document,
-			status_message: StatusMessage::from(initial_status),
+            status_message: StatusMessage::from(initial_status),
         }
     }
 
@@ -125,7 +121,7 @@ impl Editor {
             (KeyModifiers::CONTROL, Char('q')) | (_, Esc) => self.should_quit = true,
             (_, Up | Down | Left | Right | PageUp | PageDown | End | Home) => {
                 self.move_cursor(pressed_key.code);
-            },
+            }
             _ => (),
         }
 
@@ -150,7 +146,7 @@ impl Editor {
                 if y < height {
                     y = y.saturating_add(1);
                 }
-            },
+            }
             Left => {
                 if x > 0 {
                     x -= 1;
@@ -163,7 +159,7 @@ impl Editor {
                         x = 0;
                     }
                 }
-            },
+            }
             Right => {
                 if x < width {
                     x += 1;
@@ -171,21 +167,21 @@ impl Editor {
                     y += 1;
                     x = 0;
                 }
-            },
+            }
             PageUp => {
                 y = if y > terminal_height {
                     y - terminal_height
                 } else {
                     0
                 }
-            },
+            }
             PageDown => {
                 y = if y.saturating_add(terminal_height) < height {
                     y + terminal_height as usize
                 } else {
                     height
                 }
-            },
+            }
             Home => x = 0,
             End => x = width,
             _ => (),
@@ -290,12 +286,12 @@ impl Editor {
 
     fn draw_message_bar(&self) {
         Terminal::clear_current_line();
-		let message = &self.status_message;
-		if Instant::now() - message.time < Duration::new(5, 0) {
-			let mut text = message.text.clone();
-			text.truncate(self.terminal.size().width as usize);
-			print!("{}", text);
-		}
+        let message = &self.status_message;
+        if Instant::now() - message.time < Duration::new(5, 0) {
+            let mut text = message.text.clone();
+            text.truncate(self.terminal.size().width as usize);
+            print!("{}", text);
+        }
     }
 }
 

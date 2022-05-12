@@ -1,13 +1,12 @@
-use crate::Position;
-use crossterm::{
-    cursor::{Hide, MoveTo, Show},
-    event::{self, Event, KeyEvent},
-    execute,
-    style::{self, Color},
-    terminal::{enable_raw_mode, Clear, ClearType},
-    Result,
-};
 use std::io::{stdout, Write};
+
+use crossterm::cursor::{Hide, MoveTo, Show};
+use crossterm::event::{self, Event, KeyEvent};
+use crossterm::style::{self, Color};
+use crossterm::terminal::{enable_raw_mode, Clear, ClearType};
+use crossterm::{execute, Result};
+
+use crate::Position;
 
 pub struct Size {
     pub width: u16,

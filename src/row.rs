@@ -1,4 +1,5 @@
 use std::cmp;
+
 use unicode_segmentation::UnicodeSegmentation;
 
 pub struct Row {
