@@ -11,5 +11,5 @@ pub use row::Row;
 pub use terminal::Terminal;
 
 fn main() {
-	Editor::default().run();
+    Editor::default().run();
 }

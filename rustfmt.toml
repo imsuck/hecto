@@ -1,5 +1,5 @@
 edition = "2021"
-hard_tabs = true
+hard_tabs = false
 hex_literal_case = "Lower"
 imports_layout = "HorizontalVertical"
 match_block_trailing_comma = true

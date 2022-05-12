@@ -1,25 +1,25 @@
 use std::cmp;
 
 pub struct Row {
-	string: String,
+    string: String,
 }
 
 impl From<&str> for Row {
-	fn from(slice: &str) -> Self {
-		Self {
-			string: slice.to_owned(),
-		}
-	}
+    fn from(slice: &str) -> Self {
+        Self {
+            string: slice.to_owned(),
+        }
+    }
 }
 
 impl Row {
-	pub fn render(&self, start: usize, end: usize) -> String {
-		let end = cmp::min(end, self.string.len());
-		let start = cmp::min(start, end);
+    pub fn render(&self, start: usize, end: usize) -> String {
+        let end = cmp::min(end, self.string.len());
+        let start = cmp::min(start, end);
 
-		self.string.get(start..end).unwrap_or_default().to_owned()
-	}
-    
+        self.string.get(start..end).unwrap_or_default().to_owned()
+    }
+
     pub fn len(&self) -> usize {
         self.string.len()
     }
