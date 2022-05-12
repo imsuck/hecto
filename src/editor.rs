@@ -71,13 +71,13 @@ impl Editor {
 
     pub fn default() -> Self {
         let args: Vec<String> = env::args().collect();
-		let mut initial_status = String::from("HELP: Ctrl-Q = quit");
+		let mut initial_status = String::from("HELP: Ctrl-Q = Quit");
 
         let document = if args.len() > 1 {
             let file_name = &args[1];
-            let doc = Document::open(&file_name);
-			if doc.is_ok() {
-				doc.unwrap()
+            let doc = Document::open(file_name);
+			if let Ok(doc) = doc {
+				doc
 			} else {
 				initial_status = format!("ERR: Could not open file: {}", file_name);
 				Document::default()
