@@ -28,7 +28,6 @@ impl Terminal {
 		})
 	}
 
-	#[must_use]
 	pub fn size(&self) -> &Size {
 		&self.size
 	}
