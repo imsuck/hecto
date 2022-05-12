@@ -112,7 +112,19 @@ impl Editor {
                     y = y.saturating_add(1);
                 }
             },
-            Left => x = x.saturating_sub(1),
+            Left => {
+				if x > 0 {
+					x -= 1;
+				} else if y > 0 {
+					y -= 1;
+					
+					if let Some(row) = self.document.row(y) {
+						x = row.len();
+					} else {
+						x = 0;
+					}
+				}
+			},
             Right => {
                 if x < width {
                     x = x.saturating_add(1);
