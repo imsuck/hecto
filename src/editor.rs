@@ -117,7 +117,7 @@ impl Editor {
 					x -= 1;
 				} else if y > 0 {
 					y -= 1;
-					
+
 					if let Some(row) = self.document.row(y) {
 						x = row.len();
 					} else {
@@ -126,10 +126,13 @@ impl Editor {
 				}
 			},
             Right => {
-                if x < width {
-                    x = x.saturating_add(1);
-                }
-            },
+				if x < width {
+					x += 1;
+				} else if y < height {
+					y -= 1;
+					x = 0;
+				}
+			},
             PageUp => {
 				y = if y > terminal_height {
 					y - terminal_height
