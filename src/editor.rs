@@ -1,11 +1,15 @@
+use crate::Document;
+use crate::Row;
 use crate::Terminal;
 use crossterm::{
 	event::{KeyCode, KeyModifiers},
 	Result,
 };
+use std::env;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[derive(Default)]
 pub struct Position {
 	pub x: usize,
 	pub y: usize,
@@ -15,6 +19,7 @@ pub struct Editor {
 	should_quit: bool,
 	terminal: Terminal,
 	cursor_position: Position,
+	document: Document,
 }
 
 impl Editor {
@@ -35,16 +40,26 @@ impl Editor {
 	}
 
 	pub fn default() -> Self {
+		let args: Vec<String> = env::args().collect();
+
+		let document = if args.len() > 1 {
+			let file_name = &args[1];
+			Document::open(file_name).unwrap_or_default()
+		} else {
+			Document::default()
+		};
+
 		Self {
 			should_quit: false,
 			terminal: Terminal::default().expect("Failed to initialize terminal"),
-			cursor_position: Position { x: 2, y: 0 },
+			cursor_position: Position::default(),
+			document,
 		}
 	}
 
 	fn refresh_screen(&self) -> Result<()> {
 		Terminal::cursor_hide();
-		Terminal::cursor_position(&Position { x: 0, y: 0 });
+		Terminal::cursor_position(&Position::default());
 
 		if self.should_quit {
 			Terminal::clear_screen();
@@ -53,6 +68,7 @@ impl Editor {
 			self.draw_rows();
 			Terminal::cursor_position(&self.cursor_position);
 		}
+
 		Terminal::cursor_show();
 		Terminal::flush()
 	}
@@ -78,8 +94,8 @@ impl Editor {
 		let size = self.terminal.size();
 		let height = size.height as usize;
 		let width = size.width as usize;
-
 		let Position { mut x, mut y } = self.cursor_position;
+
 		match key {
 			Up => y = y.saturating_sub(1),
 			Down => {
@@ -99,6 +115,7 @@ impl Editor {
 			End => x = width,
 			_ => (),
 		}
+
 		self.cursor_position = Position { x, y };
 	}
 
@@ -113,11 +130,22 @@ impl Editor {
 		println!("{}\r", welcome_message);
 	}
 
+	fn draw_row(&self, row: &Row) {
+		let start = 0;
+		let end = self.terminal.size().width as usize;
+		let row = row.render(start, end);
+		println!("{}\r", row);
+	}
+
 	fn draw_rows(&self) {
 		let height = self.terminal.size().height;
-		for row in 0..height - 1 {
+
+		for terminal_row in 0..height - 1 {
 			Terminal::clear_current_line();
-			if row == height / 3 {
+
+			if let Some(row) = self.document.row(terminal_row as usize) {
+				self.draw_row(row);
+			} else if self.document.is_empty() && terminal_row == height / 3 {
 				self.draw_welcome_message();
 			} else {
 				println!("~\r");
