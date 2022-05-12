@@ -3,6 +3,7 @@ use crossterm::{
     cursor::{Hide, MoveTo, Show},
     event::{self, Event, KeyEvent},
     execute,
+    style::{self, Color},
     terminal::{enable_raw_mode, Clear, ClearType},
     Result,
 };
@@ -23,7 +24,7 @@ impl Terminal {
         Ok(Self {
             size: Size {
                 width: size.0,
-                height: size.1,
+                height: size.1.saturating_sub(2),
             },
         })
     }
@@ -66,5 +67,17 @@ impl Terminal {
 
     pub fn clear_current_line() {
         execute!(stdout(), Clear(ClearType::CurrentLine)).ok();
+    }
+
+    pub fn set_bg_color(color: Color) {
+        execute!(stdout(), style::SetBackgroundColor(color)).ok();
+    }
+
+    pub fn reset_color() {
+        execute!(stdout(), style::ResetColor).ok();
+    }
+
+    pub fn set_fg_color(color: Color) {
+        execute!(stdout(), style::SetForegroundColor(color)).ok();
     }
 }
