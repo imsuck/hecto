@@ -121,7 +121,11 @@ impl Editor {
             (KeyModifiers::CONTROL, Char('q')) | (_, Esc) => self.should_quit = true,
             (_, Up | Down | Left | Right | PageUp | PageDown | End | Home) => {
                 self.move_cursor(pressed_key.code);
-            }
+            },
+            (_, Char(c)) => {
+                self.document.insert(&self.cursor_position, c);
+                self.move_cursor(Right);
+            },
             _ => (),
         }
 
