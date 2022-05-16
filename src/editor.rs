@@ -116,21 +116,33 @@ impl Editor {
     fn process_keypress(&mut self) -> Result<()> {
         let pressed_key = Terminal::read_key()?;
         match (pressed_key.modifiers, pressed_key.code) {
-            (KeyModifiers::CONTROL, KeyCode::Char('q')) | (_, KeyCode::Esc) => self.should_quit = true,
-            (_, KeyCode::Up | KeyCode::Down | KeyCode::Left | KeyCode::Right | KeyCode::PageUp | KeyCode::PageDown | KeyCode::End | KeyCode::Home) => {
+            (KeyModifiers::CONTROL, KeyCode::Char('q')) | (_, KeyCode::Esc) => {
+                self.should_quit = true
+            }
+            (
+                _,
+                KeyCode::Up
+                | KeyCode::Down
+                | KeyCode::Left
+                | KeyCode::Right
+                | KeyCode::PageUp
+                | KeyCode::PageDown
+                | KeyCode::End
+                | KeyCode::Home,
+            ) => {
                 self.move_cursor(pressed_key.code);
-            },
+            }
             (_, KeyCode::Char(c)) => {
                 self.document.insert(&self.cursor_position, c);
                 self.move_cursor(KeyCode::Right);
-            },
+            }
             (_, KeyCode::Delete) => self.document.delete(&self.cursor_position),
             (_, KeyCode::Backspace) => {
-                if self.cursor_position.x > 0|| self.cursor_position.y > 0 {
+                if self.cursor_position.x > 0 || self.cursor_position.y > 0 {
                     self.move_cursor(KeyCode::Left);
                     self.document.delete(&self.cursor_position);
                 }
-            },
+            }
             _ => (),
         }
 
