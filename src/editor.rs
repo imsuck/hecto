@@ -135,11 +135,11 @@ impl Editor {
         }
     }
 
+    #[allow(clippy::integer_arithmetic)]
     fn process_keypress(&mut self) -> Result<()> {
         let pressed_key = Terminal::read_key()?;
         match (pressed_key.modifiers, pressed_key.code) {
             (KeyModifiers::CONTROL, KeyCode::Char('q')) | (_, KeyCode::Esc) => {
-                #[allow(clippy::integer_arithmetic)]
                 if self.quit_times > 0 && self.document.is_dirty() {
                     self.status_message = StatusMessage::from(format!(
                         "WARNING! File has unsaved changes. Press Ctrl-Q {} more times to quit.",
@@ -175,6 +175,11 @@ impl Editor {
                     self.move_cursor(KeyCode::Left);
                     self.document.delete(&self.cursor_position);
                 }
+            },
+            (_, KeyCode::Enter) => {
+                self.document.insert(&self.cursor_position, '\n');
+                self.cursor_position.x = 0;
+                self.cursor_position.y += 1;
             },
             _ => (),
         }
