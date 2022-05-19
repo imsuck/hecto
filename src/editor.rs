@@ -299,12 +299,23 @@ impl Editor {
         let width = self.terminal.size().width as usize;
         let mut file_name = "[No Name]".to_owned();
 
+        let modified_indicator = if self.document.is_dirty() {
+            " (modified)"
+        } else {
+            ""
+        };
+
         if let Some(name) = &self.document.file_name {
             file_name = name.clone();
             file_name.truncate(20);
         }
 
-        let mut status = format!("{} - {} lines", file_name, self.document.len());
+        let mut status = format!(
+            "{} - {} lines{}",
+            file_name,
+            self.document.len(),
+            modified_indicator
+        );
         let line_indicator = format!(
             "{}/{}",
             self.cursor_position.y.saturating_add(1),
