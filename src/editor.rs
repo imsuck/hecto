@@ -113,19 +113,32 @@ impl Editor {
         Terminal::flush()
     }
 
+    fn save(&mut self) {
+        if self.document.file_name.is_none() {
+            let new_name = self.prompt("Save as: ").unwrap_or(None);
+
+            if new_name.is_none() {
+                self.status_message = StatusMessage::from("Save aborted.".to_owned());
+                return;
+            }
+
+            self.document.file_name = new_name;
+        }
+
+        if self.document.save().is_ok() {
+            self.status_message = StatusMessage::from("File successfully saved.".to_owned());
+        } else {
+            self.status_message = StatusMessage::from("Error writing file!".to_owned());
+        }
+    }
+
     fn process_keypress(&mut self) -> Result<()> {
         let pressed_key = Terminal::read_key()?;
         match (pressed_key.modifiers, pressed_key.code) {
             (KeyModifiers::CONTROL, KeyCode::Char('q')) | (_, KeyCode::Esc) => {
                 self.should_quit = true
             },
-            (KeyModifiers::CONTROL, KeyCode::Char('s')) => {
-                if self.document.save().is_ok() {
-                    self.status_message = StatusMessage::from("File saved successfully".to_owned());
-                } else {
-                    self.status_message = StatusMessage::from("Error writing file!".to_owned());
-                }
-            },
+            (KeyModifiers::CONTROL, KeyCode::Char('s')) => self.save(),
             (
                 _,
                 KeyCode::Up
@@ -320,6 +333,41 @@ impl Editor {
             text.truncate(self.terminal.size().width as usize);
             print!("{}", text);
         }
+    }
+
+    fn prompt(&mut self, prompt: &str) -> Result<Option<String>> {
+        let mut result = String::new();
+
+        loop {
+            self.status_message = StatusMessage::from(format!("{}{}", prompt, result));
+            self.refresh_screen()?;
+
+            match Terminal::read_key()?.code {
+                KeyCode::Backspace => {
+                    if !result.is_empty() {
+                        result.truncate(result.len() - 1);
+                    }
+                },
+                KeyCode::Enter => break,
+                KeyCode::Char(c) => {
+                    if !c.is_control() {
+                        result.push(c);
+                    }
+                },
+                KeyCode::Esc => {
+                    result.truncate(0);
+                    break;
+                },
+                _ => (),
+            }
+        }
+
+        self.status_message = StatusMessage::from(String::new());
+        if result.is_empty() {
+            return Ok(None);
+        }
+
+        Ok(Some(result))
     }
 }
 
