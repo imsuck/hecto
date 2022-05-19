@@ -26,6 +26,7 @@ impl Row {
         let start = cmp::min(start, end);
 
         let mut result = String::new();
+        #[allow(clippy::integer_arithmetic)]
         for grapheme in self.string[..]
             .graphemes(true)
             .skip(start)
@@ -69,27 +70,28 @@ impl Row {
         self.update_len();
     }
 
+    #[allow(clippy::integer_arithmetic)]
     pub fn delete(&mut self, at: usize) {
         if at >= self.len() {
             return;
-        } else {
-            let mut result: String = self.string[..].graphemes(true).take(at).collect();
-            let remainder: String = self.string[..].graphemes(true).skip(at + 1).collect();
-
-            result.push_str(&remainder);
-
-            self.string = result;
         }
+
+        let mut result: String = self.string[..].graphemes(true).take(at).collect();
+        let remainder: String = self.string[..].graphemes(true).skip(at + 1).collect();
+
+        result.push_str(&remainder);
+        self.string = result;
 
         self.update_len();
     }
 
     pub fn append(&mut self, new: &Self) {
         self.string = format!("{}{}", self.string, new.string);
-        
+
         self.update_len();
     }
 
+    #[must_use]
     pub fn split(&mut self, at: usize) -> Self {
         let beginning: String = self.string[..].graphemes(true).take(at).collect();
         let remainder: String = self.string[..].graphemes(true).skip(at).collect();

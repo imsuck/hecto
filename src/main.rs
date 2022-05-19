@@ -7,7 +7,12 @@
     clippy::shadow_reuse,
     clippy::print_stdout,
     clippy::wildcard_enum_match_arm,
-    clippy::else_if_without_else
+    clippy::else_if_without_else,
+    clippy::pattern_type_mismatch,
+    clippy::expect_used,
+    clippy::blanket_clippy_restriction_lints,
+    clippy::as_conversions,
+    clippy::string_slice
 )]
 mod document;
 mod editor;

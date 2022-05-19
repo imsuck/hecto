@@ -20,6 +20,7 @@ const STATUS_BG_COLOR: Color = Color::Rgb {
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const QUIT_TIMES: u8 = 2;
 
+#[non_exhaustive]
 #[derive(Default)]
 pub struct Position {
     pub x: usize,
@@ -71,8 +72,7 @@ impl Editor {
         let args: Vec<String> = env::args().collect();
         let mut initial_status = String::from("HELP: Ctrl-S = save | Ctrl-Q = Quit");
 
-        let document = if args.len() > 1 {
-            let file_name = &args[1];
+        let document = if let Some(file_name) = args.get(1) {
             let doc = Document::open(file_name);
             if let Ok(doc) = doc {
                 doc
@@ -139,6 +139,7 @@ impl Editor {
         let pressed_key = Terminal::read_key()?;
         match (pressed_key.modifiers, pressed_key.code) {
             (KeyModifiers::CONTROL, KeyCode::Char('q')) | (_, KeyCode::Esc) => {
+                #[allow(clippy::integer_arithmetic)]
                 if self.quit_times > 0 && self.document.is_dirty() {
                     self.status_message = StatusMessage::from(format!(
                         "WARNING! File has unsaved changes. Press Ctrl-Q {} more times to quit.",
@@ -207,7 +208,9 @@ impl Editor {
                     y = y.saturating_add(1);
                 }
             },
-            Left => {
+            Left =>
+            {
+                #[allow(clippy::integer_arithmetic)]
                 if x > 0 {
                     x -= 1;
                 } else if y > 0 {
@@ -220,7 +223,9 @@ impl Editor {
                     }
                 }
             },
-            Right => {
+            Right =>
+            {
+                #[allow(clippy::integer_arithmetic)]
                 if x < width {
                     x += 1;
                 } else if y < height {
@@ -230,14 +235,14 @@ impl Editor {
             },
             PageUp => {
                 y = if y > terminal_height {
-                    y - terminal_height
+                    y.saturating_sub(terminal_height)
                 } else {
                     0
                 }
             },
             PageDown => {
                 y = if y.saturating_add(terminal_height) < height {
-                    y + terminal_height as usize
+                    y.saturating_add(terminal_height)
                 } else {
                     height
                 }
@@ -282,6 +287,7 @@ impl Editor {
         let mut welcome_message = format!("Hecto editor -- version {}\r", VERSION);
         let width = self.terminal.size().width as usize;
         let len = welcome_message.len();
+        #[allow(clippy::integer_arithmetic, clippy::integer_division)]
         let padding = width.saturating_sub(len) / 2;
         let spaces = " ".repeat(padding.saturating_sub(1));
         welcome_message = format!("~{}{}", spaces, welcome_message);
@@ -292,18 +298,22 @@ impl Editor {
     fn draw_row(&self, row: &Row) {
         let width = self.terminal.size().width as usize;
         let start = self.offset.x;
-        let end = self.offset.x + width;
+        let end = self.offset.x.saturating_add(width);
         let row = row.render(start, end);
         println!("{}\r", row);
     }
 
+    #[allow(clippy::integer_arithmetic, clippy::integer_division)]
     fn draw_rows(&self) {
         let height = self.terminal.size().height;
 
         for terminal_row in 0..height {
             Terminal::clear_current_line();
 
-            if let Some(row) = self.document.row(terminal_row as usize + self.offset.y) {
+            if let Some(row) = self
+                .document
+                .row(self.offset.y.saturating_add(terminal_row as usize))
+            {
                 self.draw_row(row);
             } else if self.document.is_empty() && terminal_row == height / 3 {
                 self.draw_welcome_message();
@@ -340,11 +350,10 @@ impl Editor {
             self.document.len()
         );
 
+        #[allow(clippy::integer_arithmetic)]
         let len = status.len() + line_indicator.len();
-        if width > len {
-            status.push_str(&" ".repeat(width - len));
-        }
 
+        status.push_str(&" ".repeat(width.saturating_sub(len)));
         status = format!("{}{}", status, line_indicator);
         status.truncate(width);
 
@@ -374,7 +383,7 @@ impl Editor {
             match Terminal::read_key()?.code {
                 KeyCode::Backspace => {
                     if !result.is_empty() {
-                        result.truncate(result.len() - 1);
+                        result.truncate(result.len().saturating_sub(1));
                     }
                 },
                 KeyCode::Enter => break,
@@ -400,6 +409,7 @@ impl Editor {
     }
 }
 
+#[allow(clippy::panic)]
 fn die(e: &std::io::Error) {
     Terminal::clear_screen();
     panic!("{}", e);
