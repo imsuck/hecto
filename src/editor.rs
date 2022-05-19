@@ -70,7 +70,8 @@ impl Editor {
 
     pub fn default() -> Self {
         let args: Vec<String> = env::args().collect();
-        let mut initial_status = String::from("HELP: Ctrl-S = save | Ctrl-Q = Quit");
+        let mut initial_status =
+            String::from("HELP: Ctrl-F = find | Ctrl-S = save | Ctrl-Q = quit");
 
         let document = if let Some(file_name) = args.get(1) {
             let doc = Document::open(file_name);
@@ -152,6 +153,20 @@ impl Editor {
                 self.should_quit = true;
             },
             (KeyModifiers::CONTROL, KeyCode::Char('s')) => self.save(),
+            (KeyModifiers::CONTROL, KeyCode::Char('f')) => {
+                if let Some(query) = self.prompt("Search: ").unwrap_or(None) {
+                    if let Some(position) = self.document.find(&query) {
+                        self.cursor_position = position;
+                    } else {
+                        self.status_message = StatusMessage::from(format!("Not found :{}.", query));
+                    }
+                }
+            },
+
+            (_, KeyCode::Char(c)) => {
+                self.document.insert(&self.cursor_position, c);
+                self.move_cursor(KeyCode::Right);
+            },
             (
                 _,
                 KeyCode::Up
@@ -164,10 +179,6 @@ impl Editor {
                 | KeyCode::Home,
             ) => {
                 self.move_cursor(pressed_key.code);
-            },
-            (_, KeyCode::Char(c)) => {
-                self.document.insert(&self.cursor_position, c);
-                self.move_cursor(KeyCode::Right);
             },
             (_, KeyCode::Delete) => self.document.delete(&self.cursor_position),
             (_, KeyCode::Backspace) => {
