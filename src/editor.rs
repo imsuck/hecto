@@ -67,7 +67,7 @@ impl Editor {
 
     pub fn default() -> Self {
         let args: Vec<String> = env::args().collect();
-        let mut initial_status = String::from("HELP: Ctrl-Q = Quit");
+        let mut initial_status = String::from("HELP: Ctrl-S = save | Ctrl-Q = Quit");
 
         let document = if args.len() > 1 {
             let file_name = &args[1];
@@ -118,7 +118,14 @@ impl Editor {
         match (pressed_key.modifiers, pressed_key.code) {
             (KeyModifiers::CONTROL, KeyCode::Char('q')) | (_, KeyCode::Esc) => {
                 self.should_quit = true
-            }
+            },
+            (KeyModifiers::CONTROL, KeyCode::Char('s')) => {
+                if self.document.save().is_ok() {
+                    self.status_message = StatusMessage::from("File saved successfully".to_owned());
+                } else {
+                    self.status_message = StatusMessage::from("Error writing file!".to_owned());
+                }
+            },
             (
                 _,
                 KeyCode::Up
@@ -131,18 +138,18 @@ impl Editor {
                 | KeyCode::Home,
             ) => {
                 self.move_cursor(pressed_key.code);
-            }
+            },
             (_, KeyCode::Char(c)) => {
                 self.document.insert(&self.cursor_position, c);
                 self.move_cursor(KeyCode::Right);
-            }
+            },
             (_, KeyCode::Delete) => self.document.delete(&self.cursor_position),
             (_, KeyCode::Backspace) => {
                 if self.cursor_position.x > 0 || self.cursor_position.y > 0 {
                     self.move_cursor(KeyCode::Left);
                     self.document.delete(&self.cursor_position);
                 }
-            }
+            },
             _ => (),
         }
 
@@ -167,7 +174,7 @@ impl Editor {
                 if y < height {
                     y = y.saturating_add(1);
                 }
-            }
+            },
             Left => {
                 if x > 0 {
                     x -= 1;
@@ -180,7 +187,7 @@ impl Editor {
                         x = 0;
                     }
                 }
-            }
+            },
             Right => {
                 if x < width {
                     x += 1;
@@ -188,21 +195,21 @@ impl Editor {
                     y += 1;
                     x = 0;
                 }
-            }
+            },
             PageUp => {
                 y = if y > terminal_height {
                     y - terminal_height
                 } else {
                     0
                 }
-            }
+            },
             PageDown => {
                 y = if y.saturating_add(terminal_height) < height {
                     y + terminal_height as usize
                 } else {
                     height
                 }
-            }
+            },
             Home => x = 0,
             End => x = width,
             _ => (),
