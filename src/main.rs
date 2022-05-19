@@ -12,7 +12,8 @@
     clippy::expect_used,
     clippy::blanket_clippy_restriction_lints,
     clippy::as_conversions,
-    clippy::string_slice
+    clippy::string_slice,
+    clippy::return_self_not_must_use
 )]
 mod document;
 mod editor;
