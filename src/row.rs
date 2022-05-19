@@ -24,11 +24,7 @@ impl Row {
 
         let mut result = String::new();
         #[allow(clippy::integer_arithmetic)]
-        for grapheme in self.string[..]
-            .graphemes(true)
-            .skip(start)
-            .take(end - start)
-        {
+        for grapheme in (&self.string).graphemes(true).skip(start).take(end - start) {
             if grapheme == "\t" {
                 result.push(' ');
             } else {
@@ -58,7 +54,7 @@ impl Row {
         let mut result = String::new();
         let mut len = 0;
 
-        for (index, grapheme) in self.string[..].graphemes(true).enumerate() {
+        for (index, grapheme) in (&self.string).graphemes(true).enumerate() {
             len += 1;
 
             if index == at {
@@ -82,7 +78,7 @@ impl Row {
         let mut result = String::new();
         let mut len = 0;
 
-        for (index, grapheme) in self.string[..].graphemes(true).enumerate() {
+        for (index, grapheme) in (&self.string).graphemes(true).enumerate() {
             if index != at {
                 len += 1;
                 result.push_str(grapheme);
@@ -106,7 +102,7 @@ impl Row {
         let mut splitted_row = String::new();
         let mut splitted_length = 0;
 
-        for (index, grapheme) in self.string[..].graphemes(true).enumerate() {
+        for (index, grapheme) in (&self.string).graphemes(true).enumerate() {
             if index < at {
                 len += 1;
                 row.push_str(grapheme);
@@ -134,7 +130,7 @@ impl Row {
 
         if let Some(matching_byte_index) = matching_byte_index {
             for (grapheme_index, (byte_index, _)) in
-                self.string[..].grapheme_indices(true).enumerate()
+                (&self.string).grapheme_indices(true).enumerate()
             {
                 if matching_byte_index == byte_index {
                     return Some(grapheme_index);
