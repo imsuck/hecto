@@ -21,7 +21,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 const QUIT_TIMES: u8 = 2;
 
 #[non_exhaustive]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
@@ -136,6 +136,29 @@ impl Editor {
         }
     }
 
+    fn search(&mut self) {
+        let old_position = self.cursor_position.clone();
+
+        if let Some(query) = self
+            .prompt("Search: ", |editor, _, query| {
+                if let Some(position) = editor.document.find(query) {
+                    editor.cursor_position = position;
+                    editor.scroll();
+                }
+            })
+            .unwrap_or(None)
+        {
+            if let Some(position) = self.document.find(&query) {
+                self.cursor_position = position;
+            } else {
+                self.status_message = StatusMessage::from(format!("Not found: {}.", query));
+            }
+        } else {
+            self.cursor_position = old_position;
+            self.scroll();
+        }
+    }
+
     #[allow(clippy::integer_arithmetic)]
     fn process_keypress(&mut self) -> Result<()> {
         let pressed_key = Terminal::read_key()?;
@@ -153,23 +176,7 @@ impl Editor {
                 self.should_quit = true;
             },
             (KeyModifiers::CONTROL, KeyCode::Char('s')) => self.save(),
-            (KeyModifiers::CONTROL, KeyCode::Char('f')) => {
-                if let Some(query) = self
-                    .prompt("Search: ", |editor, _, query| {
-                        if let Some(position) = editor.document.find(query) {
-                            editor.cursor_position = position;
-                            editor.scroll();
-                        }
-                    })
-                    .unwrap_or(None)
-                {
-                    if let Some(position) = self.document.find(&query) {
-                        self.cursor_position = position;
-                    } else {
-                        self.status_message = StatusMessage::from(format!("Not found :{}.", query));
-                    }
-                }
-            },
+            (KeyModifiers::CONTROL, KeyCode::Char('f')) => self.search(),
 
             (_, KeyCode::Char(c)) => {
                 self.document.insert(&self.cursor_position, c);
