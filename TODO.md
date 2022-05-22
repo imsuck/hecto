@@ -1,0 +1,2 @@
+- Tab support
+- Discord RPC
