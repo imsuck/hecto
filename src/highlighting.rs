@@ -4,6 +4,7 @@ use crossterm::style::Color;
 pub enum Type {
     None,
     Number,
+    Match,
 }
 
 impl Type {
@@ -14,7 +15,12 @@ impl Type {
                 g: 163,
                 b: 163,
             },
-            _ => Color::Rgb {
+            Type::Match => Color::Rgb {
+                r: 38,
+                g: 139,
+                b: 210,
+            },
+            Type::None => Color::Rgb {
                 r: 255,
                 g: 255,
                 b: 255,
