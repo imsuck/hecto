@@ -1,13 +1,14 @@
 use std::cmp;
 
-use crossterm::style::{Color, Stylize};
+use crossterm::style::Stylize;
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::SearchDirection;
+use crate::{highlighting, SearchDirection};
 
 #[derive(Default)]
 pub struct Row {
     string: String,
+    highlighting: Vec<highlighting::Type>,
     len: usize,
 }
 
@@ -15,6 +16,7 @@ impl From<&str> for Row {
     fn from(slice: &str) -> Self {
         Self {
             string: slice.to_owned(),
+            highlighting: Vec::new(),
             len: slice.graphemes(true).count(),
         }
     }
@@ -24,24 +26,30 @@ impl Row {
     pub fn render(&self, start: usize, end: usize) -> String {
         let end = cmp::min(end, self.string.len());
         let start = cmp::min(start, end);
-
         let mut result = String::new();
+        let mut current_highlighting = &highlighting::Type::None;
+
         #[allow(clippy::integer_arithmetic)]
-        for grapheme in (&self.string).graphemes(true).skip(start).take(end - start) {
+        for (index, grapheme) in (&self.string)
+            .graphemes(true)
+            .enumerate()
+            .skip(start)
+            .take(end - start)
+        {
             if let Some(c) = grapheme.chars().next() {
+                let highlighting_type = self
+                    .highlighting
+                    .get(index)
+                    .unwrap_or(&highlighting::Type::None);
+
+                if highlighting_type != current_highlighting {
+                    current_highlighting = highlighting_type;
+                    let highlight = format!("{}", c.with(highlighting_type.to_color()));
+                    result.push_str(&highlight);
+                }
+
                 if c == '\t' {
                     result.push(' ');
-                } else if c.is_ascii_digit() {
-                    result.push_str(&format!(
-                        "{}",
-                        c.with(Color::Rgb {
-                            r: 220,
-                            g: 163,
-                            b: 163
-                        })
-                    ));
-                } else {
-                    result.push(c);
                 }
             }
         }
@@ -131,6 +139,7 @@ impl Row {
 
         Self {
             string: splitted_row,
+            highlighting: Vec::new(),
             len: splitted_length,
         }
     }
@@ -178,5 +187,19 @@ impl Row {
         }
 
         None
+    }
+
+    pub fn highlight(&mut self) {
+        let mut highlighting = Vec::new();
+
+        for c in self.string.chars() {
+            if c.is_ascii_digit() {
+                highlighting.push(highlighting::Type::Number);
+            } else {
+                highlighting.push(highlighting::Type::None);
+            }
+        }
+
+        self.highlighting = highlighting;
     }
 }

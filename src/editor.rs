@@ -20,14 +20,12 @@ const STATUS_BG_COLOR: Color = Color::Rgb {
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const QUIT_TIMES: u8 = 2;
 
-#[non_exhaustive]
 #[derive(PartialEq, Copy, Clone)]
 pub enum SearchDirection {
     Forward,
     Backward,
 }
 
-#[non_exhaustive]
 #[derive(Default, Clone)]
 pub struct Position {
     pub x: usize,
