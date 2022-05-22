@@ -1,5 +1,6 @@
 use std::cmp;
 
+use crossterm::style::{Color, Stylize};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::SearchDirection;
@@ -27,10 +28,21 @@ impl Row {
         let mut result = String::new();
         #[allow(clippy::integer_arithmetic)]
         for grapheme in (&self.string).graphemes(true).skip(start).take(end - start) {
-            if grapheme == "\t" {
-                result.push(' ');
-            } else {
-                result.push_str(grapheme);
+            if let Some(c) = grapheme.chars().next() {
+                if c == '\t' {
+                    result.push(' ');
+                } else if c.is_ascii_digit() {
+                    result.push_str(&format!(
+                        "{}",
+                        c.with(Color::Rgb {
+                            r: 220,
+                            g: 163,
+                            b: 163
+                        })
+                    ));
+                } else {
+                    result.push(c);
+                }
             }
         }
 
