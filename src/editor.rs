@@ -7,7 +7,7 @@ use crossterm::style::Color;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use crossterm::{execute, Result};
 
-use crate::{Document, Row, Terminal};
+use crate::{Document, Row, Rpc, Terminal};
 
 const STATUS_FG_COLOR: Color = Color::Rgb {
     r: 63,
@@ -57,6 +57,7 @@ pub struct Editor {
     status_message: StatusMessage,
     quit_times: u8,
     highlighted_word: Option<String>,
+    rpc: Rpc,
 }
 
 impl Editor {
@@ -64,6 +65,8 @@ impl Editor {
         if let Err(e) = execute!(stdout(), EnterAlternateScreen) {
             die(&e);
         }
+
+        self.rpc.start();
 
         loop {
             if let Err(e) = self.refresh_screen() {
@@ -85,15 +88,23 @@ impl Editor {
         let mut initial_status =
             String::from("HELP: Ctrl-F = Find | Ctrl-S = Save | Esc/Ctrl-Q = Quit");
 
+        let rpc;
+
         let document = if let Some(file_name) = args.get(1) {
             let doc = Document::open(file_name);
             if let Ok(doc) = doc {
+                rpc = Rpc::from((*file_name).clone());
+
                 doc
             } else {
+                rpc = Rpc::from("No name".to_owned());
+
                 initial_status = format!("ERR: Could not open file: {}", file_name);
                 Document::default()
             }
         } else {
+            rpc = Rpc::from("No name".to_owned());
+
             Document::default()
         };
 
@@ -106,6 +117,7 @@ impl Editor {
             status_message: StatusMessage::from(initial_status),
             quit_times: QUIT_TIMES,
             highlighted_word: None,
+            rpc,
         }
     }
 
@@ -153,6 +165,13 @@ impl Editor {
         }
 
         if self.document.save().is_ok() {
+            self.rpc.file_name(
+                self.document
+                    .file_name
+                    .clone()
+                    .unwrap_or_else(|| "No name".to_owned()),
+            );
+
             self.status_message = StatusMessage::from("File successfully saved.".to_owned());
         } else {
             self.status_message = StatusMessage::from("Error writing file!".to_owned());

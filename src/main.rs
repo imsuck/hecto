@@ -17,6 +17,7 @@
     clippy::case_sensitive_file_extension_comparisons,
     clippy::struct_excessive_bools
 )]
+mod discord_rpc;
 mod document;
 mod editor;
 mod filetype;
@@ -24,6 +25,7 @@ mod highlighting;
 mod row;
 mod terminal;
 
+pub use discord_rpc::Rpc;
 pub use document::Document;
 use editor::Editor;
 pub use editor::{Position, SearchDirection};
