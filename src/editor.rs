@@ -1,9 +1,11 @@
 use std::env;
+use std::io::stdout;
 use std::time::{Duration, Instant};
 
 use crossterm::event::{KeyCode, KeyModifiers};
 use crossterm::style::Color;
-use crossterm::Result;
+use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
+use crossterm::{execute, Result};
 
 use crate::{Document, Row, Terminal};
 
@@ -59,6 +61,10 @@ pub struct Editor {
 
 impl Editor {
     pub fn run(&mut self) {
+        if let Err(e) = execute!(stdout(), EnterAlternateScreen) {
+            die(&e);
+        }
+
         loop {
             if let Err(e) = self.refresh_screen() {
                 die(&e);
@@ -108,7 +114,8 @@ impl Editor {
         Terminal::cursor_position(&Position::default());
 
         if self.should_quit {
-            Terminal::clear_screen();
+            //Terminal::clear_screen();
+            execute!(stdout(), LeaveAlternateScreen)?;
             println!("Goodbye.\r");
         } else {
             self.document.highlight(
