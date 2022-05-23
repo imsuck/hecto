@@ -1,3 +1,3 @@
-- [] Tab support
-- [] Discord RPC
-- [] Copy and paste support
+- [ ] Tab support
+- [ ] Discord RPC
+- [ ] Copy and paste support
