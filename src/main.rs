@@ -14,7 +14,8 @@
     clippy::as_conversions,
     clippy::exhaustive_enums,
     clippy::exhaustive_structs,
-    clippy::case_sensitive_file_extension_comparisons
+    clippy::case_sensitive_file_extension_comparisons,
+    clippy::struct_excessive_bools
 )]
 mod document;
 mod editor;

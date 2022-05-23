@@ -30,7 +30,8 @@ impl Row {
         //let mut current_highlighting = &highlighting::Type::None;
 
         #[allow(clippy::integer_arithmetic)]
-        for (index, grapheme) in (&self.string)
+        for (index, grapheme) in self
+            .string
             .graphemes(true)
             .enumerate()
             .skip(start)
@@ -80,7 +81,7 @@ impl Row {
         let mut result = String::new();
         let mut len = 0;
 
-        for (index, grapheme) in (&self.string).graphemes(true).enumerate() {
+        for (index, grapheme) in self.string.graphemes(true).enumerate() {
             len += 1;
 
             if index == at {
@@ -104,7 +105,7 @@ impl Row {
         let mut result = String::new();
         let mut len = 0;
 
-        for (index, grapheme) in (&self.string).graphemes(true).enumerate() {
+        for (index, grapheme) in self.string.graphemes(true).enumerate() {
             if index != at {
                 len += 1;
                 result.push_str(grapheme);
@@ -128,7 +129,7 @@ impl Row {
         let mut splitted_row = String::new();
         let mut splitted_length = 0;
 
-        for (index, grapheme) in (&self.string).graphemes(true).enumerate() {
+        for (index, grapheme) in self.string.graphemes(true).enumerate() {
             if index < at {
                 len += 1;
                 row.push_str(grapheme);
@@ -169,7 +170,8 @@ impl Row {
         };
 
         #[allow(clippy::integer_arithmetic)]
-        let substring: String = (&self.string)
+        let substring: String = self
+            .string
             .graphemes(true)
             .skip(start)
             .take(end - start)
@@ -193,116 +195,164 @@ impl Row {
         None
     }
 
-    pub fn highlight(&mut self, opts: HighlightingOptions, word: Option<&str>) {
-        let chars: Vec<char> = self.string.chars().collect();
-        let mut highlighting = Vec::new();
-        let mut matches = Vec::new();
-        let mut search_index = 0;
-
+    fn highlight_match(&mut self, word: Option<&str>) {
         if let Some(word) = word {
-            while let Some(search_match) = self.find(word, search_index, SearchDirection::Forward) {
-                matches.push(search_match);
+            if word.is_empty() {
+                return;
+            }
 
+            let mut index = 0;
+            while let Some(search_match) = self.find(word, index, SearchDirection::Forward) {
                 if let Some(next_index) = search_match.checked_add(word.graphemes(true).count()) {
-                    search_index = next_index;
+                    #[allow(clippy::indexing_slicing)]
+                    for i in search_match..next_index {
+                        self.highlighting[i] = highlighting::Type::Match;
+                    }
+                    index = next_index;
                 } else {
                     break;
                 }
             }
         }
+    }
 
-        let mut prev_is_separator = true;
-        let mut in_string = false;
+    #[allow(clippy::integer_arithmetic)]
+    fn highlight_char(
+        &mut self,
+        index: &mut usize,
+        opts: HighlightingOptions,
+        c: char,
+        chars: &[char],
+    ) -> bool {
+        if opts.chars() && c == '\'' {
+            if let Some(next_char) = chars.get(index.saturating_add(1)) {
+                let closing_index = if *next_char == '\\' {
+                    index.saturating_add(3)
+                } else {
+                    index.saturating_add(2)
+                };
+
+                if let Some(closing_char) = chars.get(closing_index) {
+                    if *closing_char == '\'' {
+                        for _ in 0..=closing_index {
+                            self.highlighting.push(highlighting::Type::Char);
+                            *index += 1;
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+
+        false
+    }
+
+    #[allow(clippy::integer_arithmetic)]
+    fn highlight_comment(
+        &mut self,
+        index: &mut usize,
+        opts: HighlightingOptions,
+        c: char,
+        chars: &[char],
+    ) -> bool {
+        if opts.comments() && c == '/' && *index < chars.len() {
+            if let Some(next_char) = chars.get(index.saturating_add(1)) {
+                if *next_char == '/' {
+                    for _ in *index..chars.len() {
+                        self.highlighting.push(highlighting::Type::Comment);
+                        *index += 1;
+                    }
+
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    #[allow(clippy::integer_arithmetic)]
+    fn highlight_string(
+        &mut self,
+        index: &mut usize,
+        opts: HighlightingOptions,
+        c: char,
+        chars: &[char],
+    ) -> bool {
+        if opts.strings() && c == '"' {
+            loop {
+                self.highlighting.push(highlighting::Type::String);
+                *index += 1;
+
+                if let Some(next_char) = chars.get(*index) {
+                    if *next_char == '"' {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+            self.highlighting.push(highlighting::Type::String);
+            *index += 1;
+
+            return true;
+        }
+
+        false
+    }
+
+    #[allow(clippy::integer_arithmetic)]
+    fn highlight_number(
+        &mut self,
+        index: &mut usize,
+        opts: HighlightingOptions,
+        c: char,
+        chars: &[char],
+    ) -> bool {
+        if opts.numbers() && c.is_ascii_digit() {
+            if *index > 0 {
+                #[allow(clippy::indexing_slicing, clippy::integer_arithmetic)]
+                let prev_char = chars[*index - 1];
+                if !prev_char.is_ascii_punctuation() && !prev_char.is_ascii_whitespace() {
+                    return false;
+                }
+            }
+
+            loop {
+                self.highlighting.push(highlighting::Type::Number);
+                *index += 1;
+                if let Some(next_char) = chars.get(*index) {
+                    if *next_char != '.' && !next_char.is_ascii_digit() {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+            return true;
+        }
+
+        false
+    }
+
+    #[allow(clippy::integer_arithmetic)]
+    pub fn highlight(&mut self, opts: HighlightingOptions, word: Option<&str>) {
+        self.highlighting = Vec::new();
+        let chars: Vec<char> = self.string.chars().collect();
         let mut index = 0;
 
-        #[allow(clippy::integer_arithmetic)]
         while let Some(c) = chars.get(index) {
-            if let Some(word) = word {
-                if matches.contains(&index) {
-                    #[allow(clippy::integer_arithmetic)]
-                    for _ in word.graphemes(true) {
-                        index += 1;
-                        highlighting.push(highlighting::Type::Match);
-                    }
-                    continue;
-                }
-            }
-
-            let previous_highlight = if index > 0 {
-                #[allow(clippy::integer_arithmetic)]
-                highlighting
-                    .get(index - 1)
-                    .unwrap_or(&highlighting::Type::None)
-            } else {
-                &highlighting::Type::None
-            };
-
-            if opts.chars() && !in_string && *c == '\'' {
-                prev_is_separator = true;
-
-                if let Some(next_char) = chars.get(index.saturating_add(1)) {
-                    let closing_index = if *next_char == '\\' {
-                        index.saturating_add(3)
-                    } else {
-                        index.saturating_add(2)
-                    };
-                    if let Some(closing_char) = chars.get(closing_index) {
-                        if *closing_char == '\'' {
-                            for _ in 0..=closing_index.saturating_sub(index) {
-                                highlighting.push(highlighting::Type::Char);
-                                index += 1;
-                            }
-                        }
-                    }
-                };
-                highlighting.push(highlighting::Type::None);
-                index += 1;
-
+            if self.highlight_char(&mut index, opts, *c, &chars)
+                || self.highlight_comment(&mut index, opts, *c, &chars)
+                || self.highlight_string(&mut index, opts, *c, &chars)
+                || self.highlight_number(&mut index, opts, *c, &chars)
+            {
                 continue;
             }
-            if opts.strings() {
-                if in_string {
-                    highlighting.push(highlighting::Type::String);
-
-                    if *c == '\\' && index < self.len().saturating_sub(1) {
-                        highlighting.push(highlighting::Type::String);
-                        index += 2;
-                        continue;
-                    }
-                    if *c == '"' {
-                        in_string = false;
-                        prev_is_separator = true;
-                    } else {
-                        prev_is_separator = false;
-                    }
-
-                    index += 1;
-                    continue;
-                }
-            } else if prev_is_separator && *c == '"' {
-                highlighting.push(highlighting::Type::String);
-                in_string = true;
-                prev_is_separator = true;
-                index += 1;
-                continue;
-            }
-            if opts.numbers() {
-                if (c.is_ascii_digit()
-                    && (prev_is_separator || *previous_highlight == highlighting::Type::Number))
-                    || (*c == '.' && *previous_highlight == highlighting::Type::Number)
-                {
-                    highlighting.push(highlighting::Type::Number);
-                } else {
-                    highlighting.push(highlighting::Type::None);
-                }
-            } else {
-                highlighting.push(highlighting::Type::None);
-            }
-
-            prev_is_separator = c.is_ascii_punctuation() || c.is_ascii_whitespace();
+            self.highlighting.push(highlighting::Type::None);
             index += 1;
         }
 
-        self.highlighting = highlighting;
+        self.highlight_match(word);
     }
 }
