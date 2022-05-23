@@ -9,6 +9,7 @@ use crate::{highlighting, HighlightingOptions, SearchDirection};
 pub struct Row {
     string: String,
     highlighting: Vec<highlighting::Type>,
+    pub is_highlighted: bool,
     len: usize,
 }
 
@@ -17,6 +18,7 @@ impl From<&str> for Row {
         Self {
             string: slice.to_owned(),
             highlighting: Vec::new(),
+            is_highlighted: false,
             len: slice.graphemes(true).count(),
         }
     }
@@ -141,10 +143,12 @@ impl Row {
 
         self.string = row;
         self.len = len;
+        self.is_highlighted = false;
 
         Self {
             string: splitted_row,
             highlighting: Vec::new(),
+            is_highlighted: false,
             len: splitted_length,
         }
     }
@@ -195,7 +199,7 @@ impl Row {
         None
     }
 
-    fn highlight_match(&mut self, word: Option<&str>) {
+    fn highlight_match(&mut self, word: &Option<String>) {
         if let Some(word) = word {
             if word.is_empty() {
                 return;
@@ -361,6 +365,40 @@ impl Row {
         false
     }
 
+    #[allow(
+        clippy::indexing_slicing,
+        clippy::string_slice,
+        clippy::integer_arithmetic
+    )]
+    fn highlight_multiline_comment(
+        &mut self,
+        index: &mut usize,
+        opts: &HighlightingOptions,
+        c: char,
+        chars: &[char],
+    ) -> bool {
+        if opts.comments() && c == '/' && *index < chars.len() {
+            if let Some(next_char) = chars.get(index.saturating_add(1)) {
+                if *next_char == '*' {
+                    let closing_index =
+                        if let Some(closing_index) = self.string[*index + 2..].find("*/") {
+                            *index + closing_index + 4
+                        } else {
+                            chars.len()
+                        };
+                    for _ in *index..closing_index {
+                        self.highlighting.push(highlighting::Type::MultilineComment);
+                        *index += 1;
+                    }
+
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
     #[allow(clippy::integer_arithmetic)]
     fn highlight_string(
         &mut self,
@@ -425,13 +463,56 @@ impl Row {
         false
     }
 
-    #[allow(clippy::integer_arithmetic)]
-    pub fn highlight(&mut self, opts: &HighlightingOptions, word: Option<&str>) {
-        self.highlighting = Vec::new();
+    #[allow(
+        clippy::indexing_slicing,
+        clippy::string_slice,
+        clippy::integer_arithmetic
+    )]
+    pub fn highlight(
+        &mut self,
+        opts: &HighlightingOptions,
+        word: &Option<String>,
+        start_with_comment: bool,
+    ) -> bool {
         let chars: Vec<char> = self.string.chars().collect();
         let mut index = 0;
+        let mut in_ml_comment = start_with_comment;
+
+        if self.is_highlighted && word.is_none() {
+            if let Some(hl_type) = self.highlighting.last() {
+                if *hl_type == highlighting::Type::MultilineComment
+                    && self.string.len() > 1
+                    && self.string[self.string.len() - 2..] == *"*/"
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        self.highlighting = Vec::new();
+
+        if in_ml_comment {
+            let closing_index = if let Some(closing_index) = self.string.find("*/") {
+                closing_index + 2
+            } else {
+                chars.len()
+            };
+
+            for _ in 0..closing_index {
+                self.highlighting.push(highlighting::Type::MultilineComment);
+            }
+
+            index = closing_index;
+        }
 
         while let Some(c) = chars.get(index) {
+            if self.highlight_multiline_comment(&mut index, opts, *c, &chars) {
+                in_ml_comment = true;
+                continue;
+            }
+            in_ml_comment = false;
+
             if self.highlight_char(&mut index, opts, *c, &chars)
                 || self.highlight_comment(&mut index, opts, *c, &chars)
                 || self.highlight_primary_keywords(&mut index, opts, &chars)
@@ -446,6 +527,12 @@ impl Row {
         }
 
         self.highlight_match(word);
+        if in_ml_comment && &self.string[self.string.len().saturating_sub(2)..] != "*/" {
+            return true;
+        }
+
+        self.is_highlighted = true;
+        false
     }
 }
 
