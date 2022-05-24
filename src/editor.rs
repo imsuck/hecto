@@ -61,7 +61,7 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn run(&mut self) {
+    pub async fn run(&mut self) {
         if let Err(e) = execute!(stdout(), EnterAlternateScreen) {
             die(&e);
         }
@@ -77,13 +77,13 @@ impl Editor {
                 return;
             }
 
-            if let Err(e) = self.process_keypress() {
+            if let Err(e) = self.process_keypress().await {
                 die(&e);
             }
         }
     }
 
-    pub fn default() -> Self {
+    pub async fn default() -> Self {
         let args: Vec<String> = env::args().collect();
         let mut initial_status =
             String::from("HELP: Ctrl-F = Find | Ctrl-S = Save | Esc/Ctrl-Q = Quit");
@@ -92,7 +92,7 @@ impl Editor {
 
         let document = if let Some(file_name) = args.get(1) {
             let doc = Document::open(file_name);
-            if let Ok(doc) = doc {
+            if let Ok(doc) = doc.await {
                 rpc = Rpc::from((*file_name).clone());
 
                 doc
@@ -152,7 +152,7 @@ impl Editor {
         Terminal::flush()
     }
 
-    fn save(&mut self) {
+    async fn save(&mut self) {
         if self.document.file_name.is_none() {
             let new_name = self.prompt("Save as: ", |_, _, _| {}).unwrap_or(None);
 
@@ -164,7 +164,7 @@ impl Editor {
             self.document.file_name = new_name;
         }
 
-        if self.document.save().is_ok() {
+        if self.document.save().await.is_ok() {
             self.rpc.file_name(
                 self.document
                     .file_name
@@ -223,7 +223,7 @@ impl Editor {
     }
 
     #[allow(clippy::integer_arithmetic)]
-    fn process_keypress(&mut self) -> Result<()> {
+    async fn process_keypress(&mut self) -> Result<()> {
         let pressed_key = Terminal::read_key()?;
         match (pressed_key.modifiers, pressed_key.code) {
             (KeyModifiers::CONTROL, KeyCode::Char('q')) | (_, KeyCode::Esc) => {
@@ -238,7 +238,7 @@ impl Editor {
 
                 self.should_quit = true;
             },
-            (KeyModifiers::CONTROL, KeyCode::Char('s')) => self.save(),
+            (KeyModifiers::CONTROL, KeyCode::Char('s')) => self.save().await,
             (KeyModifiers::CONTROL, KeyCode::Char('f')) => self.search(),
 
             (_, KeyCode::Char(c)) => {

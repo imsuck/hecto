@@ -6,9 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-std = "1.11.0"
 clipboard = "0.5.0"
 crossterm = "0.23.2"
 discord-rich-presence = "0.2.0"
 sysinfo = "0.23.13"
+tokio = { version = "1.18.2", features = ["macros", "fs", "rt", "rt-multi-thread", "io-std", "io-util"] }
 unicode-segmentation = "1"

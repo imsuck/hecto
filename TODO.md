@@ -1,4 +1,4 @@
 -   [ ] Tab support
 -   [x] Discord RPC
 -   [ ] Copy and paste support
--   [ ] Use async-std
+-   [ ] Use an async library

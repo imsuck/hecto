@@ -34,6 +34,7 @@ pub use highlighting::Type;
 pub use row::Row;
 pub use terminal::Terminal;
 
-fn main() {
-    Editor::default().run();
+#[tokio::main]
+async fn main() {
+    Editor::default().await.run().await;
 }

@@ -1,7 +1,5 @@
-use std::fs;
-use std::io::Write;
-
-use crossterm::Result;
+use tokio::fs;
+use tokio::io::{AsyncWriteExt, Result};
 
 use crate::{FileType, Position, Row, SearchDirection};
 
@@ -14,8 +12,8 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn open(file_name: &str) -> Result<Self> {
-        let contents = fs::read_to_string(file_name)?;
+    pub async fn open(file_name: &str) -> Result<Self> {
+        let contents = fs::read_to_string(file_name).await?;
         let file_type = FileType::from(file_name);
         let mut rows = Vec::new();
 
@@ -116,14 +114,14 @@ impl Document {
         }
     }
 
-    pub fn save(&mut self) -> Result<()> {
+    pub async fn save(&mut self) -> Result<()> {
         if let Some(file_name) = &self.file_name {
-            let mut file = fs::File::create(file_name)?;
+            let mut file = fs::File::create(file_name).await?;
             self.file_type = FileType::from(file_name);
 
             for row in &mut self.rows {
-                file.write_all(row.as_bytes())?;
-                file.write_all(b"\n")?;
+                file.write_all(row.as_bytes()).await?;
+                file.write_all(b"\n").await?;
             }
             self.dirty = false;
         }
