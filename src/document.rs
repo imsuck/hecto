@@ -85,7 +85,7 @@ impl Document {
         self.unhighlight_row(at.y);
     }
 
-    fn unhighlight_row(&mut self, start: usize) {
+    pub fn unhighlight_row(&mut self, start: usize) {
         let start = start.saturating_sub(1);
 
         for row in self.rows.iter_mut().skip(start) {

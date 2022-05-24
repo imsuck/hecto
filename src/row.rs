@@ -29,7 +29,6 @@ impl Row {
         let end = cmp::min(end, self.string.len());
         let start = cmp::min(start, end);
         let mut result = String::new();
-        //let mut current_highlighting = &highlighting::Type::None;
 
         #[allow(clippy::integer_arithmetic)]
         for (index, grapheme) in self
@@ -45,19 +44,12 @@ impl Row {
                     .get(index)
                     .unwrap_or(&highlighting::Type::None);
 
-                //if highlighting_type != current_highlighting {
-                //    current_highlighting = highlighting_type;
                 let highlight = format!("{}", c.with(highlighting_type.to_color()));
                 result.push_str(&highlight);
 
-                //    continue;
-                //}
-
                 if c == '\t' {
                     result.push(' ');
-                } /* else {
-                      result.push(c);
-                  } */
+                }
             }
         }
 

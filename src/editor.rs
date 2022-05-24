@@ -126,7 +126,6 @@ impl Editor {
         Terminal::cursor_position(&Position::default());
 
         if self.should_quit {
-            //Terminal::clear_screen();
             execute!(stdout(), LeaveAlternateScreen)?;
             println!("Goodbye.\r");
         } else {
@@ -184,7 +183,7 @@ impl Editor {
         let mut direction = SearchDirection::Forward;
         let query = self
             .prompt(
-                "Search: (ESC to cancel, Arrows to navigate)",
+                "Search (ESC to cancel, Arrows to navigate): ",
                 |editor, key, query| {
                     let mut moved = false;
 
@@ -195,6 +194,7 @@ impl Editor {
                             moved = true;
                         },
                         KeyCode::Left | KeyCode::Up => direction = SearchDirection::Backward,
+                        KeyCode::Esc => editor.document.unhighlight_row(0),
                         _ => direction = SearchDirection::Forward,
                     }
 
@@ -493,6 +493,7 @@ impl Editor {
                 },
                 KeyCode::Esc => {
                     result.truncate(0);
+                    callback(self, key, "");
                     break;
                 },
                 _ => (),
