@@ -86,14 +86,16 @@ impl Editor {
     pub async fn default() -> Self {
         let args: Vec<String> = env::args().collect();
         let mut initial_status =
-            String::from("HELP: Ctrl-F = Find | Ctrl-S = Save | Esc/Ctrl-Q = Quit");
+            String::from("HELP: Ctrl-F = Find | Ctrl-S = Save | Esc/Ctrl-Q = Quit | Ctrl-O = Open");
 
         let rpc;
 
         let document = if let Some(file_name) = args.get(1) {
             let doc = Document::open(file_name);
+            #[allow(clippy::unwrap_used)]
             if let Ok(doc) = doc.await {
-                rpc = Rpc::from((*file_name).clone());
+                // Get the actual file name
+                rpc = Rpc::from(file_name.split('/').last().unwrap().to_owned());
 
                 doc
             } else {
@@ -240,6 +242,7 @@ impl Editor {
             },
             (KeyModifiers::CONTROL, KeyCode::Char('s')) => self.save().await,
             (KeyModifiers::CONTROL, KeyCode::Char('f')) => self.search(),
+            (KeyModifiers::CONTROL, KeyCode::Char('o')) => self.open().await?,
 
             (_, KeyCode::Char(c)) => {
                 self.document.insert(&self.cursor_position, c);
@@ -508,6 +511,27 @@ impl Editor {
         }
 
         Ok(Some(result))
+    }
+
+    async fn open(&mut self) -> Result<()> {
+        #[allow(clippy::or_fun_call)]
+        let file_name = self.prompt("Open file: ", |_, _, _| {}).unwrap_or(None);
+        if let Some(file_name) = file_name {
+            let doc = Document::open(&file_name);
+            #[allow(clippy::unwrap_used)]
+            if let Ok(doc) = doc.await {
+                // Get the actual file name
+                self.rpc
+                    .file_name(file_name.split('/').last().unwrap().to_owned());
+
+                self.document = doc;
+            } else {
+                self.status_message =
+                    StatusMessage::from(format!("ERR: Could not open file: {}", file_name));
+            }
+        }
+
+        Ok(())
     }
 }
 
