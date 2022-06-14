@@ -4,21 +4,6 @@ use discord_rich_presence::activity::{self, Activity};
 use discord_rich_presence::{DiscordIpc, DiscordIpcClient};
 use sysinfo::{System, SystemExt};
 
-/*pub fn start_rpc(file_name: &str, time_stamp: u64) {
-    #[allow(clippy::unreadable_literal)]
-    let mut drpc = DiscordRPC::new(978157973845192734);
-    let s = System::new_all();
-    // Check if Discord is open
-    if s.processes_by_name("Discord").peekable().peek().is_some() {
-        drpc.start();
-
-        loop {
-            drpc.set_activity(|a| a.details(format!("Editing {}", file_name).timestamp()))
-                .ok();
-        }
-    }
-}*/
-
 pub struct Rpc {
     client: DiscordIpcClient,
     file_name: String,
