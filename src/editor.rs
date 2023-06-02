@@ -9,16 +9,8 @@ use crossterm::{execute, Result};
 
 use crate::{Document, Row, Rpc, Terminal};
 
-const STATUS_FG_COLOR: Color = Color::Rgb {
-    r: 63,
-    g: 63,
-    b: 63,
-};
-const STATUS_BG_COLOR: Color = Color::Rgb {
-    r: 239,
-    g: 239,
-    b: 239,
-};
+const STATUS_FG_COLOR: Color = Color::Black;
+const STATUS_BG_COLOR: Color = Color::White;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const QUIT_TIMES: u8 = 2;
 
@@ -90,18 +82,17 @@ impl Editor {
 
         let rpc;
 
-        let document = if let Some(file_name) = args.get(1) {
-            let doc = Document::open(file_name);
+        let document = if let Some(file_path) = args.get(1) {
+            let doc = Document::open(file_path);
             #[allow(clippy::unwrap_used)]
             if let Ok(doc) = doc.await {
-                // Get the actual file name
-                rpc = Rpc::from(file_name.split('/').last().unwrap().to_owned());
+                rpc = Rpc::from(file_path.split('/').last().unwrap().to_owned());
 
                 doc
             } else {
                 rpc = Rpc::from("No name".to_owned());
 
-                initial_status = format!("ERR: Could not open file: {}", file_name);
+                initial_status = format!("ERR: Could not open file: {}", file_path);
                 Document::default()
             }
         } else {
@@ -289,6 +280,7 @@ impl Editor {
     fn move_cursor(&mut self, key: KeyCode) {
         use KeyCode::{Down, End, Home, Left, PageDown, PageUp, Right, Up};
 
+        self.terminal.update_size();
         let terminal_height = self.terminal.size().height as usize;
         let Position { mut x, mut y } = self.cursor_position;
         let height = self.document.len();
@@ -424,15 +416,11 @@ impl Editor {
         let width = self.terminal.size().width as usize;
         let mut file_name = "[No Name]".to_owned();
 
-        let modified_indicator = if self.document.is_dirty() {
-            " (modified)"
-        } else {
-            ""
-        };
+        let modified_indicator = if self.document.is_dirty() { " [+]" } else { "" };
 
         if let Some(name) = &self.document.file_name {
             file_name = name.clone();
-            file_name.truncate(20);
+            file_name.truncate(width.saturating_sub(30));
         }
 
         let mut status = format!(

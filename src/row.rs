@@ -399,6 +399,7 @@ impl Row {
         c: char,
         chars: &[char],
     ) -> bool {
+        // TODO: Extend for <lib> in C/C++
         if opts.strings() && c == '"' {
             loop {
                 self.highlighting.push(highlighting::Type::String);

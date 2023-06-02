@@ -32,6 +32,13 @@ impl Terminal {
         &self.size
     }
 
+    pub fn update_size(&mut self) {
+        // TODO: Handle this?
+        let size = crossterm::terminal::size().unwrap();
+        self.size.width = size.0;
+        self.size.height = size.1.saturating_sub(2);
+    }
+
     pub fn clear_screen() {
         execute!(stdout(), Clear(ClearType::All)).ok();
     }
